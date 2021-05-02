@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+    dashboard_api:
+        container_name: django_api
+        build:
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+            - .:/app
+        ports:
+            - 8000:8000
+        depends_on:
+            - dashboard_db
+    
+    dashboard_db:
+        container_name: django_admin_db
+        image: mysql:5.7
+        restart: always
+        environment:
+            MYSQL_DATABASE: django_admin
+            MYSQL_USER: dashdb_user
+            MYSQL_PASSWORD: .
+            MYSQL_ROOT_PASSWORD: .
+            MYSQL_ROOT_HOST: '%'
+        volumes:
+            - .dbdata:/var/lib/mysql
+        ports :
+            - "3306:3306"
