@@ -131,4 +131,4 @@ dmypy.json
 
 # new additions
 .dbdata
-.dbdata
+.dbdata-old
