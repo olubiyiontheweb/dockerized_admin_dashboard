@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import exceptions
 from .models import User
 from .serializers import UserSerializer
+from .authentication import generate_access_token, jwtAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 # Create your views here.
 
@@ -34,7 +37,42 @@ def login(request):
     if not user.check_password(password):
         raise exceptions.AuthenticationFailed('Incorrect Password!')
 
-    return Response('success')
+    response = Response('success')
+
+    token = generate_access_token(user)
+    response.set_cookie(key='jwt', value=token, httponly=True)
+
+    response.data = {
+        'jwt':token
+    }
+
+    return response
+
+@api_view(['POST'])
+def logout(request):
+
+    response = Response()
+    response.delete_cookie(key='jwt')
+
+    response.data = {
+        'message': 'Logout Successful'
+    }
+
+
+# get user from submited jwt token during login
+class AuthenticatedUser(APIView):
+
+    authentication_classes = [jwtAuthentication]
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+
+        return Response({
+            'data': serializer.data
+        })
+
 
 @api_view(['GET'])
 def users(request):

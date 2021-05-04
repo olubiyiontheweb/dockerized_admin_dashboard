@@ -82,8 +82,8 @@ DATABASES = {
         #'NAME': BASE_DIR / 'db.sqlite3',
         'NAME': 'django_admin',
         'USER': 'dashdb_user',
-        'PASSWORD': 'Pass@123',
-        'HOST': 'django_admin_db',
+        'PASSWORD': 'Pa$$w0rd',
+        'HOST': 'localhost',
         'PORT': '3306'
     }
 }
