@@ -1,3 +1,5 @@
+# for seting up containers, the webapp and mysql database.
+
 version: '3.8'
 services:
     dashboard_api:

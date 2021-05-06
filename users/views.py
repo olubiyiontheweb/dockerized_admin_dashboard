@@ -8,7 +8,7 @@ from .authentication import generate_access_token, jwtAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-# Create your views here.
+# These are API views for user registration and authentication 
 
 #API end point for user registration
 @api_view(['POST'])

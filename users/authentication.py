@@ -1,3 +1,5 @@
+# This called during user authentication. Generates user token and cookies for frontend use.
+
 import jwt
 import datetime
 from django.conf import settings

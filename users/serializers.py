@@ -1,3 +1,5 @@
+# These serializers help to perform operations on the last request
+
 from rest_framework import serializers
 from .models import User
 
