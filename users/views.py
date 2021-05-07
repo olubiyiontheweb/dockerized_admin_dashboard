@@ -1,7 +1,8 @@
 #from django.shortcuts import render
+from dashboard.pagination import CustomPagination
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import exceptions, viewsets
+from rest_framework import exceptions, viewsets, status, generics, mixins
 from .models import User, Permission, Role
 from .serializers import UserSerializer, RoleSerializer
 from .authentication import generate_access_token, jwtAuthentication
@@ -96,16 +97,37 @@ class RoleViewSet(viewsets.ViewSet):
         })
 
     def create(self, request):
-        pass
+        serializer = RoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            'data':serializer.data
+        }, status= status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        serializer = RoleSerializer(role)
+
+        return Response({
+            'data': serializer.data
+        })
 
     def update(self, request, pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        serializer = RoleSerializer(instance=role, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            'data':serializer.data
+        }, status=status.HTTP_202_ACCEPTED)
+
 
     def destroy(self, request, pk=None):
-        pass
+        role = Role.objects.get(id=pk)
+        role.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # @api_view(['GET'])
@@ -115,3 +137,33 @@ class RoleViewSet(viewsets.ViewSet):
 #     serializer = UserSerializer(users, many=True)
 
 #     return  Response(serializer.data)
+
+class UserGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    pagination_class = CustomPagination
+
+    def get(self, request, pk = None):
+        if pk:
+            return Response({
+                'data': self.retrieve(request, pk).data
+            })
+
+        return self.list(request)
+
+    def post(self, request):
+        return Response({
+            'data': self.create(request, pk).data
+        })
+
+    def put(self, request, pk=None):
+        return Response({
+            'data': self.update(request, pk).data
+        })
+    
+    def delete(self, request, pk=None):
+        return self.destroy(request, pk)
