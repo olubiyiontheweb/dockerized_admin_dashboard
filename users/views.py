@@ -68,6 +68,8 @@ class AuthenticatedUser(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        data = UserSerializer(request.user).data
+        data['permissions'] = [p['name'] for p in data['role']['permissions']]
         serializer = UserSerializer(request.user)
 
         return Response({
@@ -156,14 +158,50 @@ class UserGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
         return self.list(request)
 
     def post(self, request):
+        request.data.update({
+            'password': 1234
+            #'role': request.data['role_id']
+        })
         return Response({
             'data': self.create(request, pk).data
         })
 
     def put(self, request, pk=None):
+
+        if request.data['role_id']:
+            request.data.update({
+                'role': request.data['role_id']
+            })
+
         return Response({
-            'data': self.update(request, pk).data
+            'data': self.partial_update(request, pk).data
         })
     
     def delete(self, request, pk=None):
         return self.destroy(request, pk)
+
+class ProfileInfoAPIView(APIView):
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk=None):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=true)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+class ProfilePasswordAPIView(APIView):
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk=None):
+        user = request.user
+
+        if request.data['password'] != request.data['password_confirm']:
+            raise exceptions.ValidationError('Passwords do not match')
+
+        serializer = UserSerializer(user, data=request.data, partial=true)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
