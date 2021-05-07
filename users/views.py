@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import exceptions, viewsets, status, generics, mixins
 from .models import User, Permission, Role
 from .serializers import UserSerializer, RoleSerializer
+from .permissions import ViewPermissions
 from .authentication import generate_access_token, jwtAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -65,7 +66,7 @@ class AuthenticatedUser(APIView):
 
     authentication_classes = [jwtAuthentication]
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
 
     def get(self, request):
         data = UserSerializer(request.user).data
@@ -78,7 +79,7 @@ class AuthenticatedUser(APIView):
 
 class PermissionAPIView(APIView):
     authentication_classes = [jwtAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
 
     def get(self, request):
         serializer = PermissionSerializer(Permission.objects.all(), many=True)
@@ -89,7 +90,8 @@ class PermissionAPIView(APIView):
 
 class RoleViewSet(viewsets.ViewSet):
     authentication_classes = [jwtAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
+    permission_object = 'roles'
 
     def list(self, request):
         serializer = RoleSerializer(Role.objects.all(), many=True)
@@ -140,9 +142,13 @@ class RoleViewSet(viewsets.ViewSet):
 
 #     return  Response(serializer.data)
 
-class UserGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+class UserGenericAPIView(
+    generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
+    mixins.UpdateModelMixin, mixins.DestroyModelMixin
+):
     authentication_classes = [jwtAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
+    permission_object = 'users'
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -182,7 +188,8 @@ class UserGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
 
 class ProfileInfoAPIView(APIView):
     authentication_classes = [jwtAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
+    permission_object = 'users'
 
     def put(self, request, pk=None):
         user = request.user
@@ -193,7 +200,7 @@ class ProfileInfoAPIView(APIView):
 
 class ProfilePasswordAPIView(APIView):
     authentication_classes = [jwtAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & ViewPermissions]
 
     def put(self, request, pk=None):
         user = request.user

@@ -1,0 +1,78 @@
+from django.shortcuts import render
+from django.core.files.storage import default_storage
+
+from rest_framework.response import Response
+from rest_framework import generics, mixins
+from rest_framework.decorators import APIView
+from django.http import HttpResponse
+from rest_framework.permissions import IsAuthenticated
+
+from dashboard.pagination import CustomPagination
+from users.authentication import jwtAuthentication
+from .serializers import OrderSerializer, OrderItemSerializer
+from .models import Order
+
+
+# Create your views here.
+class OrderGenericAPIView(
+    generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    pagination_class = CustomPagination
+
+    def get(self, request, pk = None):
+        if pk:
+            return Response({
+                'data': self.retrieve(request, pk).data
+            })
+
+        return self.list(request)
+
+class ExportAPIView(APIView):
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'atachment; filename=orders.csv'
+
+        orders = Order.objects.all()
+        writer = csv.writer(response)
+
+        writer.writerow(['ID','Name','Email','Product Title','Price','Quantity'])
+
+        for order in orders:
+            writer.writerow([order.id, order.name, order.email,'','',''])
+            orderItems = OrderItem.objects.all().filter(order_id=order.id)
+
+            for item in orderItems:
+                writer.writerow(['','','', item.product_title, item.price, item.quantity])
+
+        return response
+
+class ChartAPIView(APIView):
+    authentication_classes = [jwtAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, _):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT DATE_FORMAT(o.created_at, '%Y-%m-%d' ) as date, SUM(i.quantity * i.price) as sum
+            FROM orders_orderItem as i ON o.id = i.order_id
+            GROUP_BY date
+            """)
+            row = cursor.fetchall()
+
+        data = [{
+            'date': result[0],
+            'sum': result[1]
+        } for result in row]
+
+        return Response({
+            'data': data
+        })

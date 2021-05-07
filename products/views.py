@@ -14,7 +14,9 @@ from .models import Product
 
 
 # Create your views here.
-class ProductGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+class ProductGenericAPIView(generics.GenericAPIView, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
+    mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+    
     authentication_classes = [jwtAuthentication]
     permission_classes = [IsAuthenticated]
 
