@@ -135,6 +135,8 @@ STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'users.User'
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 MEDIA_URL = '/media/'
 
 CORS_ORIGIN_ALLOW_ALL = True
